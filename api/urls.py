@@ -20,10 +20,11 @@ from . import views
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('register/',views.register.as_view(),name='register'),
-    path('verify/',views.verify.as_view(),name='verify'),
-    path('login/',views.login.as_view(),name='login'),
-    path('forgotepsw/',views.forgotepsw.as_view(),name='forgotepsw'),
-    path('validateotpforgotepsw/',views.validateotpforgotepsw.as_view(),name='validateotpforgotepsw'),
-    path('setpassword/',views.setpassword.as_view(),name='setpassword'),
+    path('register',views.register.as_view(),name='register'),
+    path('verify',views.verify.as_view(),name='verify'),
+    path('login',views.login.as_view(),name='login'),
+    path('forgot_password',views.forgotepsw.as_view(),name='forgotepsw'),
+    path('validate_otp_forgot_password',views.validateotpforgotepsw.as_view(),name='validateotpforgotepsw'),
+    path('set_password',views.setpassword.as_view(),name='setpassword'),
+    path('upload_image',views.upload_image.as_view(),name='upload_image'),
 ]
