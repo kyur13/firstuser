@@ -48,34 +48,25 @@ class userotp(models.Model):
     expiration_time = models.DateTimeField()
 
     def save(self, *args, **kwargs):
+        if not self.created_at:
+            self.created_at = timezone.now() 
         self.expiration_time = self.created_at + timedelta(minutes=1)
         super(userotp, self).save(*args, **kwargs)
 
     def is_expired(self):
         return timezone.now() > self.expiration_time
+    
+
+def user_image_upload_to(instance, filename):
+    return os.path.join('tmp', str(instance.id), filename)
 
 class userimage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_by=models.ForeignKey(CustomUser,on_delete=models.CASCADE)
-    img1=models.ImageField(upload_to='uuid',blank=True,null=True,max_length=500)
-    img2=models.ImageField(upload_to='uuid',blank=True,null=True,max_length=500)
-    img3=models.ImageField(upload_to='uuid',blank=True,null=True,max_length=500)
+    img1=models.ImageField(upload_to=user_image_upload_to,blank=True,null=True,max_length=500)
+    img2=models.ImageField(upload_to=user_image_upload_to,blank=True,null=True,max_length=500)
+    img3=models.ImageField(upload_to=user_image_upload_to,blank=True,null=True,max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     background=models.CharField(max_length=150)
 
-@receiver(post_save, sender=userimage)
-def create_status_json(sender, instance, created, **kwargs):
-    if created:  
-        user_uuid = instance.created_by.id 
-        tmp_dir = os.path.join(settings.MEDIA_ROOT, 'tmp', str(user_uuid))
-                
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-        
-        status_file_path = os.path.join(tmp_dir, 'status.json')
-        
-        status_data = {'progress': 0, 'message': 'processing started'}
-
-        with open(status_file_path, 'w') as json_file:
-            json.dump(status_data, json_file)

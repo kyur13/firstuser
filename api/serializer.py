@@ -1,12 +1,12 @@
 from .models import CustomUser,userimage
 from rest_framework.serializers import ModelSerializer
-
-class customuserserializer(ModelSerializer):
+from rest_framework import serializers
+class customuserserializer(serializers.ModelSerializer):
     class Meta:
         model=CustomUser
         fields='__all__'
 
-class userimgserilizer(ModelSerializer):
+class userimgserilizer(serializers.ModelSerializer):
     class Meta:
         model=userimage
-        fields='__all__'
+        fields = ['img1', 'img2', 'img3', 'background']

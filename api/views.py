@@ -13,7 +13,10 @@ from rest_framework import generics
 from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
-import os
+import os,json
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
 
 class register(generics.CreateAPIView):
     queryset=CustomUser.objects.all()
@@ -168,34 +171,49 @@ class setpassword(generics.GenericAPIView):
         
 class upload_image(generics.CreateAPIView):
     queryset=userimage.objects.all()
-    serializer_class=customuserserializer
-    def perform_create(self, serializer):
-        # Retrieve the email from the request
-        mail = self.request.data.get('email')
-
-        # Try to find the user by email
+    serializer_class=userimgserilizer
+    authentication_classes=[JWTTokenUserAuthentication]
+    permission_classes=[IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+    def create(self,request, *args, **kwargs):
+        mail = self.request.data.get('created_by')
+        
         try:
             user = CustomUser.objects.get(email=mail)
         except CustomUser.DoesNotExist:
             return Response({'message': 'User with this email does not exist', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Add the user to the serializer before saving
-        user_image_instance = serializer.save(created_by=user)
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'message': 'User image uploaded unsuccessfully','success': False}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Now, create the status.json file
-        user_uuid = user_image_instance.created_by.id  # The UUID of the user
-        tmp_dir = os.path.join(settings.MEDIA_ROOT, 'tmp', str(user_uuid))
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-        return Response({'message': 'User image uploaded successfully', 'success': True}, status=status.HTTP_201_CREATED)
-    # def create(self, request, *args, **kwargs):
-    #     mail=request.data.get('email')
-    #     user = CustomUser.objects.get(email=mail)
-    #     img1=request.data.get('img1')
-    #     img2=request.data.get('img2')
-    #     backgrd=request.data.get('background')
-    #     serial=userimgserilizer(data=request.data)
-    #     if serial.is_valid():
-    #         serial.save()
-    #         return Response({'message':'Images is successfully uplodaded','success':True})
-    #     return Response({'message':'Images is not uplodaded','success':False})
+        
+        user_img = serializer.save(created_by=user)
+        print(user_img.id)
+        tmp_dir = os.path.join(settings.MEDIA_ROOT, 'tmp', str(user_img.id))
+        status_file_path = os.path.join(tmp_dir, 'status.json')
+        status_data = {'progress': 0, 'message': 'processing started'}
+        with open(status_file_path, 'w') as json_file:
+            json.dump(status_data, json_file)
+        if user_img:
+            return Response({'message': 'User image uploaded successfully', 'success': True}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'message': 'User image uploaded unsuccessfully', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
+
+class get_status_json(generics.RetrieveAPIView):
+    def retrieve(self, request, *args, **kwargs):
+        img_uuid = request.GET.get('uuid')
+        if not img_uuid:
+            return Response({
+                'message': 'UUID is required',
+                'success': False
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        status_file_path = os.path.join(settings.MEDIA_ROOT, 'tmp', str(img_uuid), 'status.json')
+        if os.path.exists(status_file_path):
+            with open(status_file_path, 'r') as json_file:
+                status_data = json.load(json_file)
+            
+            return Response(status_data,status=status.HTTP_200_OK)
+
+        return Response({'message': 'status.json file not found','success': False}, status=status.HTTP_404_NOT_FOUND)   

@@ -27,4 +27,5 @@ urlpatterns = [
     path('validate_otp_forgot_password',views.validateotpforgotepsw.as_view(),name='validateotpforgotepsw'),
     path('set_password',views.setpassword.as_view(),name='setpassword'),
     path('upload_image',views.upload_image.as_view(),name='upload_image'),
+    path('get_status_json',views.get_status_json.as_view(),name='get_status_json'),
 ]
