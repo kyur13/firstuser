@@ -16,7 +16,9 @@ from django.conf import settings
 import os,json
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 class register(generics.CreateAPIView):
     queryset=CustomUser.objects.all()
@@ -118,8 +120,29 @@ class login(generics.GenericAPIView):
         return Response({
                 'message': 'Invalid credentials',
                 'success':False
-            }, status=status.HTTP_200_OK)
-    
+            }, status=status.HTTP_404_NOT_FOUND)
+
+class LogoutView(generics.GenericAPIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+
+            if not refresh_token:
+                return Response({"message": "Refresh token is required.",'success':False}, status=400)
+
+            refresh_token_obj = RefreshToken(refresh_token)
+            refresh_token_obj.blacklist()
+
+            return Response({"message": "Successfully logged out.",'success':False}, status=205)  
+
+        except InvalidToken:
+            return Response({"message": "Token is invalid or expired.",'success':False}, status=400)
+        except Exception as e:
+            return Response({"message": str(e)}, status=400)  
+
 class forgotepsw(generics.GenericAPIView):
     def post(self,request):
         mail=request.data.get('email')
@@ -172,7 +195,7 @@ class setpassword(generics.GenericAPIView):
 class upload_image(generics.CreateAPIView):
     queryset=userimage.objects.all()
     serializer_class=userimgserilizer
-    authentication_classes=[JWTTokenUserAuthentication]
+    authentication_classes=[JWTAuthentication]
     permission_classes=[IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
     def create(self,request, *args, **kwargs):
@@ -191,6 +214,10 @@ class upload_image(generics.CreateAPIView):
         user_img = serializer.save(created_by=user)
         print(user_img.id)
         tmp_dir = os.path.join(settings.MEDIA_ROOT, 'tmp', str(user_img.id))
+
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
         status_file_path = os.path.join(tmp_dir, 'status.json')
         status_data = {'progress': 0, 'message': 'processing started'}
         with open(status_file_path, 'w') as json_file:

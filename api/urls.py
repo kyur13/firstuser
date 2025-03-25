@@ -23,6 +23,7 @@ urlpatterns = [
     path('register',views.register.as_view(),name='register'),
     path('verify',views.verify.as_view(),name='verify'),
     path('login',views.login.as_view(),name='login'),
+    path('logout',views.LogoutView.as_view(),name='logout'),
     path('forgot_password',views.forgotepsw.as_view(),name='forgotepsw'),
     path('validate_otp_forgot_password',views.validateotpforgotepsw.as_view(),name='validateotpforgotepsw'),
     path('set_password',views.setpassword.as_view(),name='setpassword'),

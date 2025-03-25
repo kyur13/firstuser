@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',
-    'rest_framework'
+    'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +138,12 @@ EMAIL_USE_TLS=True
 EMAIL_USE_SSL=False
 EMAIL_HOST_USER="dummyworkingco@gmail.com"
 EMAIL_HOST_PASSWORD="btub cxul btje pjdk"
+
+from datetime import timedelta
+SIMPLE_JWT={
+    'ACCESS_TOKEN_LIFETIME':timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME':timedelta(days=1),
+    'BLACKLIST_AFTER_ROTATION': True,  
+    'ROTATE_REFRESH_TOKENS': True,  
+    'UPDATE_LAST_LOGIN': True, 
+}

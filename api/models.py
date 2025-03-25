@@ -50,7 +50,7 @@ class userotp(models.Model):
     def save(self, *args, **kwargs):
         if not self.created_at:
             self.created_at = timezone.now() 
-        self.expiration_time = self.created_at + timedelta(minutes=1)
+        self.expiration_time = self.created_at + timedelta(minutes=15)
         super(userotp, self).save(*args, **kwargs)
 
     def is_expired(self):
